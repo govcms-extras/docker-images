@@ -31,6 +31,7 @@ RUN apt-get update && \
     locales \
     mariadb-client \
     openssh-client \
+    supervisor \ 
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -66,6 +67,12 @@ RUN rm /usr/local/etc/php-fpm.d/www.conf.default
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/site.conf /etc/nginx/conf.d/default.conf
 
+# Copy supervisord.conf from the conf directory
+COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy the scripts to a separate directory
+COPY --chown=govcms:govcms scripts /scripts
+
 # Use the official PHP FPM Alpine image
 FROM builder
 
@@ -89,9 +96,8 @@ USER govcms
 # Set up working directory
 WORKDIR /app
 
-# Run Composer to create project and tests
-RUN composer create-project govcms/govcms:${GOVCMS_VERSION} . --prefer-dist --remove-vcs --no-install && \
-    composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} tests --prefer-dist --remove-vcs --no-install
+# Set entrypoint
+ENTRYPOINT ["/scripts/setup-govcms"]
 
-# Start PHP-FPM and Nginx
-CMD ["sh", "-c", "php-fpm & nginx -g 'daemon off;'"]
+# Start Supervisor with the configured processes
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
