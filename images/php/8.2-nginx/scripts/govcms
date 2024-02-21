@@ -38,7 +38,7 @@ install() {
             
             # Install the Drupal site using Drush in /app folder
             cd /app
-            drush si govcms -y
+            drush si govcms -y --site-name='GovCMS' --account-pass=password
 
             # Call config function
             config
