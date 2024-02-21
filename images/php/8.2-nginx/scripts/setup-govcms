@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Run Composer to create project and tests
-composer create-project govcms/govcms:${GOVCMS_VERSION} /app --prefer-dist --remove-vcs --no-install && \
-composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} /app/tests --prefer-dist --remove-vcs --no-install
-
-# Start Supervisor with the configured processes
-exec "$@"

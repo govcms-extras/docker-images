@@ -96,8 +96,8 @@ USER govcms
 # Set up working directory
 WORKDIR /app
 
-# Set entrypoint
-ENTRYPOINT ["/scripts/setup-govcms"]
+# Set the entry point to the govcms script
+ENTRYPOINT ["/scripts/govcms"]
 
-# Start Supervisor with the configured processes
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Set the default command to run when the container starts
+CMD ["start"]
