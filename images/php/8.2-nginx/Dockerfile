@@ -107,7 +107,7 @@ RUN mkdir -p /home/govcms/.cache/composer \
     && mkdir -p /app/web/sites/default/files
 
 # Set the entry point to the govcms script
-ENTRYPOINT ["/scripts/govcms"]
+ENTRYPOINT ["govcms"]
 
 # Set the default command to run when the container starts
 CMD ["start"]

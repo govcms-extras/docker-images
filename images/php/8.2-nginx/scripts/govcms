@@ -109,13 +109,34 @@ start() {
     supervisord -c /etc/supervisor/conf.d/supervisord.conf
 }
 
+# Function to handle ci
+ci() {
+    # Add ci steps here
+    echo "Running ci..."
+
+    # Initialize directories
+    init
+
+    # Call setup function
+    setup
+
+    # Call install function
+    install
+
+    # Start Supervisor with nodaemon=false
+    supervisord -c /etc/supervisor/conf.d/supervisord.conf -n -e info
+}
+
 # Main entry point
 case "$1" in
     start)
         start
         ;;
+    ci)
+        ci
+        ;;
     *)
-        echo "Usage: $0 {start}"
+        echo "Usage: $0 {start|ci}"
         exit 1
 esac
 
