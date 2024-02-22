@@ -37,7 +37,7 @@ COPY --from=composer:lts /usr/bin/composer /usr/local/bin/composer
 RUN addgroup -g 1000 govcms && adduser -u 1000 -D -S -G govcms -s /bin/sh govcms
 
 # Create a sudoers file for govcms
-RUN echo "govcms ALL=(ALL) NOPASSWD: /sbin/apk" | tee /etc/sudoers.d/govcms
+RUN echo "govcms ALL=(ALL) NOPASSWD: /sbin/apk, /bin/chown" | tee /etc/sudoers.d/govcms
 
 # Set ownership and permissions for nginx
 RUN chown -R govcms.govcms /run \

@@ -63,16 +63,27 @@ config() {
     echo "Running config..."
 }
 
+# Function to set ownership of directory if it exists
+set_ownership_if_exists() {
+    local directory=$1
+    if [ -d "$directory" ]; then
+        chown -R govcms:govcms "$directory"
+        echo "Ownership of $directory set to govcms:govcms"
+    else
+        echo "Directory $directory does not exist. Skipping ownership change."
+    fi
+}
+
 # Function to handle start
 start() {
     # Add start steps here
     echo "Running start..."
 
-    # Set ownership of /home/govcms/.cache/composer to govcms:govcms
-    chown -R govcms:govcms /home/govcms/.cache/composer
+     # Set ownership of /home/govcms/.cache/composer to govcms:govcms if it exists
+    set_ownership_if_exists "/home/govcms/.cache/composer"
 
      # Set ownership of /app to govcms:govcms recursively
-    chown -R govcms:govcms /app
+    set_ownership_if_exists "/app"
 
     # Check if /app/composer.json exists
     if [ ! -f "/app/composer.json" ]; then
