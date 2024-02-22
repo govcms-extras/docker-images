@@ -33,7 +33,7 @@ setup() {
 
          # Run Composer to create project and tests in the temporary directory
         if [ -n "$GOVCMS_VERSION" ]; then
-            composer create-project govcms/govcms:${GOVCMS_VERSION} ${temp_dir} --prefer-dist --remove-vcs && \
+            composer create-project govcms/govcms:${GOVCMS_VERSION} ${temp_dir} --prefer-dist --remove-vcs
         fi
         
         if [ -n "$GOVCMS_TESTS_VERSION" ]; then
