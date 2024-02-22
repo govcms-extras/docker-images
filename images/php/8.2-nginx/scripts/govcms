@@ -7,9 +7,18 @@ setup() {
     # Add any additional setup steps here
     echo "Running setup..."
 
-    # Run Composer to create project and tests
-    composer create-project govcms/govcms:${GOVCMS_VERSION} /app --prefer-dist --remove-vcs --no-install && \
-    composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} /app/tests --prefer-dist --remove-vcs --no-install
+    # Create a temporary directory
+    temp_dir=$(mktemp -d)
+
+    # Run Composer to create project and tests in the temporary directory
+    composer create-project govcms/govcms:${GOVCMS_VERSION} ${temp_dir} --prefer-dist --remove-vcs && \
+    composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} ${temp_dir}/tests --prefer-dist --remove-vcs
+
+    # Copy the contents of the temporary directory to /app
+    cp -r ${temp_dir}/* /app/
+
+    # Remove the temporary directory
+    rm -rf ${temp_dir}
 }
 
 # Function to handle install
@@ -58,6 +67,12 @@ config() {
 start() {
     # Add start steps here
     echo "Running start..."
+
+    # Set ownership of /home/govcms/.cache/composer to govcms:govcms
+    chown -R govcms:govcms /home/govcms/.cache/composer
+
+     # Set ownership of /app to govcms:govcms recursively
+    chown -R govcms:govcms /app
 
     # Check if /app/composer.json exists
     if [ ! -f "/app/composer.json" ]; then
