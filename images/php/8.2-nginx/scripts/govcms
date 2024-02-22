@@ -105,26 +105,12 @@ start() {
     # Call install function
     install
 
-    # Start Supervisor
-    supervisord -c /etc/supervisor/conf.d/supervisord.conf
-}
-
-# Function to handle ci
-ci() {
-    # Add ci steps here
-    echo "Running ci..."
-
-    # Initialize directories
-    init
-
-    # Call setup function
-    setup
-
-    # Call install function
-    install
-
-    # Start Supervisor with nodaemon=false
-    supervisord -c /etc/supervisor/conf.d/supervisord.conf -n -e info
+    # Start Supervisor with the appropriate configuration file based on CI environment variable
+    if [ "$CI" = "1" ]; then
+        supervisord -c /etc/supervisor/conf.d/supervisord_ci.conf -n -e info
+    else
+        supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    fi
 }
 
 # Main entry point
@@ -132,12 +118,22 @@ case "$1" in
     start)
         start
         ;;
-    ci)
-        ci
+    install)
+        install
+        ;;
+    config)
+        config
+        ;;
+    init)
+        init
+        ;;
+    setup)
+        setup
         ;;
     *)
-        echo "Usage: $0 {start|ci}"
+        echo "Usage: $0 {start|install|config|init|setup}"
         exit 1
+        ;;
 esac
 
 exit 0

@@ -85,6 +85,7 @@ COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/site.conf /etc/nginx/conf.d/default.conf
 COPY conf/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY conf/supervisord_ci.conf /etc/supervisor/conf.d/supervisord_ci.conf
 # Delete the www.conf.default file
 RUN rm /usr/local/etc/php-fpm.d/www.conf.default
 
