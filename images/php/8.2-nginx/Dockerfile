@@ -93,6 +93,7 @@ COPY --chown=govcms:govcms scripts /scripts
 
 # Create necessary directories
 RUN mkdir -p /home/govcms/.cache/composer \
+    && mkdir -p /app/web/sites \
     && mkdir -p /app/web/sites/default/files
 
 # Expose port 80
