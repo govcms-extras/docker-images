@@ -63,15 +63,15 @@ config() {
     echo "Running config..."
 }
 
-# Function to set ownership of directory if it exists
-set_ownership_if_exists() {
+# Function to set ownership of directory if it exists or create it
+set_ownership_or_create() {
     local directory=$1
-    if [ -d "$directory" ]; then
-        chown -R govcms:govcms "$directory"
-        echo "Ownership of $directory set to govcms:govcms"
-    else
-        echo "Directory $directory does not exist. Skipping ownership change."
+    if [ ! -d "$directory" ]; then
+        echo "Creating directory: $directory"
+        mkdir -p "$directory"
     fi
+    chown -R govcms:govcms "$directory"
+    echo "Ownership of $directory set to govcms:govcms"
 }
 
 # Function to handle start
@@ -84,6 +84,9 @@ start() {
 
      # Set ownership of /app to govcms:govcms recursively
     set_ownership_if_exists "/app"
+
+    # Set ownership of /app/web/sites to govcms:govcms if it exists
+    set_ownership_if_exists "/app/web/sites"
 
     # Check if /app/composer.json exists
     if [ ! -f "/app/composer.json" ]; then
