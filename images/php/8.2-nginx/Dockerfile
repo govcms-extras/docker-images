@@ -91,11 +91,6 @@ RUN rm /usr/local/etc/php-fpm.d/www.conf.default
 # Copy the scripts to a separate directory
 COPY --chown=govcms:govcms scripts /scripts
 
-# Create necessary directories
-RUN mkdir -p /home/govcms/.cache/composer \
-    && mkdir -p /app/web/sites \
-    && mkdir -p /app/web/sites/default/files
-
 # Expose port 80
 EXPOSE 80
 
@@ -104,6 +99,11 @@ USER govcms
 
 # Set up working directory
 WORKDIR /app
+
+# Create necessary directories
+RUN mkdir -p /home/govcms/.cache/composer \
+    && mkdir -p /app/web/sites \
+    && mkdir -p /app/web/sites/default/files
 
 # Set the entry point to the govcms script
 ENTRYPOINT ["/scripts/govcms"]
