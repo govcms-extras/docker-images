@@ -106,9 +106,11 @@ start() {
     install
 
     # Start Supervisor with the appropriate configuration file based on CI environment variable
-    if [ "$CI" = "1" ]; then
+    if [ "$CI" = "true" ] || [ "$CI" = "1" ]; then
+        echo "Starting Supervisor with supervisord_ci.conf..."
         supervisord -c /etc/supervisor/conf.d/supervisord_ci.conf -n -e info
     else
+        echo "Starting Supervisor with supervisord.conf..."
         supervisord -c /etc/supervisor/conf.d/supervisord.conf
     fi
 }

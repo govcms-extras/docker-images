@@ -50,7 +50,7 @@ ENV PATH=/app/bin:/app/vendor/bin:/app/tests/vendor/bin:${PATH}
 ENV COMPOSER_MEMORY_LIMIT=-1
 ENV SIMPLETEST_BASE_URL='http://localhost'
 ENV SIMPLETEST_DB='sqlite://localhost/sites/default/files/.ht.sqlite'
-ENV CI=1
+ENV CI=""
 ENV CYPRESS_BASE_URL=http://localhost
 
 # Set environment variable for govcms version
