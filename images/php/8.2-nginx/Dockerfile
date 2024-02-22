@@ -4,25 +4,18 @@ FROM php:8.2-fpm AS builder
 # Set the timezone to Australia/Sydney
 RUN ln -sf /usr/share/zoneinfo/Australia/Sydney /etc/localtime
 
-# Install additional packages
+# Install additional build dependencies
 RUN apt-get update && \
     apt-get install -y \
     sudo \
     curl \
-    libfreetype6-dev \
     git \
+    libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
     libwebp-dev \
     libzip-dev \
-    nginx \
-    nodejs \
-    npm \
-    patch \
-    rsync \
-    sqlite3 \
     libicu-dev \
-    tzdata \
     zip \
     libgtk2.0-0 libgtk-3-0 libgbm-dev \
     libnotify-dev \
@@ -31,7 +24,6 @@ RUN apt-get update && \
     locales \
     mariadb-client \
     openssh-client \
-    supervisor \ 
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -50,31 +42,8 @@ COPY --from=composer:lts /usr/bin/composer /usr/local/bin/composer
 # Create the govcms group and user
 RUN groupadd -g 1000 govcms && useradd -u 1000 -g govcms -m govcms
 
-# Create a sudoers file for govcms
-RUN echo "govcms ALL=(ALL) NOPASSWD: /usr/bin/apt-get" | tee /etc/sudoers.d/govcms
-
-# Set ownership and permissions for nginx
-RUN chown -R govcms.govcms /run \
-    && chown -R govcms.govcms /var/lib/nginx \
-    && chown -R govcms.govcms /var/log/nginx
-
-# Configure PHP-FPM
-COPY conf/www.conf /usr/local/etc/php-fpm.d/www.conf
-# Delete the www.conf.default file
-RUN rm /usr/local/etc/php-fpm.d/www.conf.default
-
-# Configure Nginx
-COPY conf/nginx.conf /etc/nginx/nginx.conf
-COPY conf/site.conf /etc/nginx/conf.d/default.conf
-
-# Copy supervisord.conf from the conf directory
-COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Copy the scripts to a separate directory
-COPY --chown=govcms:govcms scripts /scripts
-
-# Use the official PHP FPM Alpine image
-FROM builder
+# Grant sudo privileges to govcms user for specific commands
+RUN echo "govcms ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/chown, /usr/bin/mkdir" | tee /etc/sudoers.d/govcms
 
 # Set environment variables
 ENV PATH=/app/bin:/app/vendor/bin:/app/tests/vendor/bin:${PATH}
@@ -88,9 +57,48 @@ ENV CYPRESS_BASE_URL=http://localhost
 ENV GOVCMS_VERSION=dev-3.x-develop
 ENV GOVCMS_TESTS_VERSION=3.x-dev
 
+# Stage 2: Runtime Stage
+FROM builder AS runtime
+
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    nginx \
+    nodejs \
+    npm \
+    patch \
+    rsync \
+    sqlite3 \
+    supervisor \
+    && \
+    rm -rf /var/lib/apt/lists/*
+
+# Clean up the installation files
+RUN apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
+
+# Set ownership and permissions for nginx
+RUN mkdir -p /run/nginx && \
+    chown -R govcms:govcms /run/nginx /var/lib/nginx /var/log/nginx
+
+# Copy configuration files
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+COPY conf/site.conf /etc/nginx/conf.d/default.conf
+COPY conf/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Delete the www.conf.default file
+RUN rm /usr/local/etc/php-fpm.d/www.conf.default
+
+# Copy the scripts to a separate directory
+COPY --chown=govcms:govcms scripts /scripts
+
+# Create necessary directories
+RUN mkdir -p /home/govcms/.cache/composer \
+    && mkdir -p /app/web/sites/default/files
+
 # Expose port 80
 EXPOSE 80
 
+# Switch to the govcms user
 USER govcms
 
 # Set up working directory

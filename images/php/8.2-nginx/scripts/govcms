@@ -79,14 +79,17 @@ start() {
     # Add start steps here
     echo "Running start..."
 
-     # Set ownership of /home/govcms/.cache/composer to govcms:govcms if it exists
-    set_ownership_if_exists "/home/govcms/.cache/composer"
+    # Set ownership of /home/govcms/.cache/composer to govcms:govcms if it exists
+    set_ownership_or_create "/home/govcms/.cache/composer"
 
-     # Set ownership of /app to govcms:govcms recursively
-    set_ownership_if_exists "/app"
+    # Set ownership of /app/web to govcms:govcms recursively
+    set_ownership_or_create "/app/web"
 
-    # Set ownership of /app/web/sites to govcms:govcms if it exists
-    set_ownership_if_exists "/app/web/sites"
+    # Set ownership of /app/web/sites to govcms:govcms recursively
+    set_ownership_or_create "/app/web/sites"
+
+    # Set ownership of /app/web/sites/default/files to govcms:govcms recursively
+    set_ownership_or_create "/app/web/sites/default/files"
 
     # Check if /app/composer.json exists
     if [ ! -f "/app/composer.json" ]; then
