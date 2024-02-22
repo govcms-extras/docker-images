@@ -90,6 +90,7 @@ RUN rm /usr/local/etc/php-fpm.d/www.conf.default
 
 # Copy the scripts to a separate directory
 COPY --chown=govcms:govcms scripts /scripts
+COPY --chown=govcms:govcms scripts /app/bin
 
 # Expose port 80
 EXPOSE 80
