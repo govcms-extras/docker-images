@@ -2,67 +2,6 @@
 
 set -e
 
-# Function to handle setup
-setup() {
-    # Add any additional setup steps here
-    echo "Running setup..."
-
-    # Create a temporary directory
-    temp_dir=$(mktemp -d)
-
-    # Run Composer to create project and tests in the temporary directory
-    composer create-project govcms/govcms:${GOVCMS_VERSION} ${temp_dir} --prefer-dist --remove-vcs && \
-    composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} ${temp_dir}/tests --prefer-dist --remove-vcs
-
-    # Copy the contents of the temporary directory to /app
-    cp -r ${temp_dir}/* /app/
-
-    # Remove the temporary directory
-    rm -rf ${temp_dir}
-}
-
-# Function to handle install
-install() {
-    # Add install steps here
-    echo "Running install..."
-
-    # Check if /app/composer.json exists before running composer update
-    if [ -f "/app/composer.json" ]; then
-        # Run composer update
-        echo "Running composer update..."
-        cd /app
-        composer update --no-interaction --optimize-autoloader
-    fi
-
-    # Check if /app/web/sites/default directory exists
-    if [ -d "/app/web/sites/default" ]; then
-        # Check if /app/web/sites/default/settings.php exists
-        if [ -f "/app/web/sites/default/settings.php" ]; then
-            echo "Drupal site already installed. Skipping installation."
-        else
-            # Copy settings.php and set ownership
-            echo "Copying settings.php and setting ownership..."
-            cp /scripts/drupal/settings.php /app/web/sites/default/settings.php
-            chown govcms:govcms /app/web/sites/default/settings.php
-            
-            # Install the Drupal site using Drush in /app folder
-            cd /app
-            drush si govcms -y --site-name='GovCMS' --account-pass=password
-
-            # Call config function
-            config
-        fi
-    else
-        echo "Error: /app/web/sites/default directory does not exist."
-        exit 1
-    fi
-}
-
-# Function to handle config
-config() {
-    echo "Running config..."
-}
-
 # Function to set ownership of directory if it exists or create it
 set_ownership_or_create() {
     local directory=$1
@@ -74,35 +13,92 @@ set_ownership_or_create() {
     echo "Ownership of $directory set to govcms:govcms"
 }
 
+# Function to handle setting ownership for multiple directories
+init() {
+    set_ownership_or_create "/home/govcms/.cache/composer"
+    set_ownership_or_create "/app/web"
+    set_ownership_or_create "/app/web/sites"
+    set_ownership_or_create "/app/web/sites/default/files"
+}
+
+# Function to handle setup
+setup() {
+    # Add any additional setup steps here
+    echo "Running setup..."
+
+    # Check if /app/composer.json exists before proceeding
+    if [ ! -f "/app/composer.json" ]; then
+        # Create a temporary directory
+        temp_dir=$(mktemp -d)
+
+        # Run Composer to create project and tests in the temporary directory
+        composer create-project govcms/govcms:${GOVCMS_VERSION} ${temp_dir} --prefer-dist --remove-vcs && \
+        composer create-project govcms/tests:${GOVCMS_TESTS_VERSION} ${temp_dir}/tests --prefer-dist --remove-vcs
+
+        # Copy the contents of the temporary directory to /app
+        cp -r ${temp_dir}/* /app/
+
+        # Remove the temporary directory
+        rm -rf ${temp_dir}
+    else
+        echo "/app/composer.json already exists. Skipping setup."
+    fi
+}
+
+# Function to handle install
+install() {
+    # Add install steps here
+    echo "Running install..."
+
+    # Check if /app/web/sites/default/settings.php exists
+    if [ ! -f "/app/web/sites/default/settings.php" ]; then
+        # Check if /app/composer.lock exists, if not run composer update
+        if [ ! -f "/app/composer.lock" ]; then
+            # Check if /app/composer.json exists before running composer update
+            if [ -f "/app/composer.json" ]; then
+                # Run composer update
+                echo "Running composer update..."
+                cd /app
+                composer update --no-interaction --optimize-autoloader
+            fi
+        else
+            echo "Composer lock file already exists. Skipping composer update."
+        fi
+
+        # Copy settings.php and set ownership
+        echo "Copying settings.php and setting ownership..."
+        cp /scripts/drupal/settings.php /app/web/sites/default/settings.php
+        chown govcms:govcms /app/web/sites/default/settings.php
+        
+        # Install the Drupal site using Drush in /app folder
+        cd /app
+        drush si govcms -y --site-name='GovCMS' --account-pass=password
+
+        # Call config function
+        config
+    else
+        echo "Drupal site already installed. Skipping installation."
+    fi
+}
+
+# Function to handle config
+config() {
+    echo "Running config..."
+}
+
 # Function to handle start
 start() {
     # Add start steps here
     echo "Running start..."
 
-    # Set ownership of /home/govcms/.cache/composer to govcms:govcms if it exists
-    set_ownership_or_create "/home/govcms/.cache/composer"
+    # Initialize directories
+    init
 
-    # Set ownership of /app/web to govcms:govcms recursively
-    set_ownership_or_create "/app/web"
+    # Call setup function
+    setup
 
-    # Set ownership of /app/web/sites to govcms:govcms recursively
-    set_ownership_or_create "/app/web/sites"
-
-    # Set ownership of /app/web/sites/default/files to govcms:govcms recursively
-    set_ownership_or_create "/app/web/sites/default/files"
-
-    # Check if /app/composer.json exists
-    if [ ! -f "/app/composer.json" ]; then
-        setup
-    fi
-
-    # Check if /app/web/sites/default/settings.php exists
-    if [ ! -f "/app/web/sites/default/settings.php" ]; then
-        # Call install function
-        install
-    else
-        echo "Drupal site already installed. Skipping installation."
-    fi
+    # Call install function
+    install
 
     # Start Supervisor
     supervisord -c /etc/supervisor/conf.d/supervisord.conf
@@ -110,20 +106,11 @@ start() {
 
 # Main entry point
 case "$1" in
-    setup)
-        setup
-        ;;
-    install)
-        install
-        ;;
-    config)
-        config
-        ;;
     start)
         start
         ;;
     *)
-        echo "Usage: $0 {setup|install|config|start}"
+        echo "Usage: $0 {start}"
         exit 1
 esac
 
